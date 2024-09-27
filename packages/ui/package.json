@@ -9,8 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/typography": "0.5.15",
     "@tanstack/react-query": "^5.40.0",
     "@tanstack/react-router": "^1.34.7",
+    "@wakeuplabs/opid-sdk": "1.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },

@@ -1,13 +1,14 @@
-import ProvidersWrapper from "@/hoc/ProvidersWrapper.tsx";
+import "./index.css";
+import ProvidersWrapper from "@/hoc/providers-wrapper.tsx";
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
-import "./index.css";
+import { router } from "@/shared/config/tanstack-router";
+import { RouterProvider } from "@tanstack/react-router";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ProvidersWrapper>
-      <App />
+      <RouterProvider router={router} />
     </ProvidersWrapper>
   </React.StrictMode>
 );
