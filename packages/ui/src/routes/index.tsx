@@ -51,8 +51,7 @@ function Index() {
         <h2>ERC20 Airdrop</h2>
         <button className="btn btn-neutral w-full">Request airdrop</button>
         <div className="border rounded-md bg-gray-50 p-3">
-          <code className="block">KYCAgeCredential</code>
-          <code className="block">0x0000000000000000000000000000000000000000</code>
+          <code className="block">Proof status and other details...</code>
         </div>
       </div>
     </div>
