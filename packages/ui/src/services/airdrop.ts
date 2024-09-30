@@ -71,13 +71,14 @@ export class AirdropService {
     return submitZkpResponseTx.hash;
   }
 
-  async getZKPRequest(requestId: number, userAddress: string) {
-    const [request, status] = await Promise.all([
+  async getAirdropStatus(requestId: number, userAddress: string) {
+    const [request, status, balance] = await Promise.all([
       this.airdrop.getZKPRequest(requestId),
-      this.airdrop.getProofStatus(userAddress, requestId)
+      this.airdrop.getProofStatus(userAddress, requestId),
+      this.airdrop.balanceOf(userAddress)
     ]);
 
-    return { metadata: JSON.parse(request.metadata), isVerified: status.isVerified };
+    return { metadata: JSON.parse(request.metadata), balance: BigInt(balance), isVerified: status.isVerified };
   }
 
   balanceOf(address: string) {
