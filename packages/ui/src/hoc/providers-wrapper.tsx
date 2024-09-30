@@ -1,5 +1,5 @@
 import React from "react";
-import { OpIdAirdropProvider } from "@/hooks/use-opid-airdrop";
+import { OpIdProvider } from "@/hooks/use-opid";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import { optimismSepolia } from "viem/chains";
@@ -9,7 +9,7 @@ const queryClient = new QueryClient();
 
 const wagmiConfig = getDefaultConfig({
   appName: "OpId Airdrop",
-  projectId: "8b2b4e449505c0e3dc82dab8b3973d09",
+  projectId: import.meta.env.VITE_WALLET_CONNECT_ID,
   chains: [optimismSepolia],
   ssr: false,
   transports: {
@@ -26,7 +26,7 @@ export default function ProvidersWrapper({ children }: ProvidersWrapperProps) {
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <OpIdAirdropProvider>{children}</OpIdAirdropProvider>
+          <OpIdProvider>{children}</OpIdProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

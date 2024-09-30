@@ -1,10 +1,12 @@
 import { AIRDROP_REQUEST_ID } from "@/constants/airdrop";
-import { useOpId, useOpIdAirdrop } from "@/hooks/use-opid-airdrop";
+import { useOpIdAirdrop } from "@/hooks/use-opid-airdrop";
+import {useOpId} from "@/hooks/use-opid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
+import { shortenString } from "@/utils/strings";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -96,6 +98,3 @@ function Index() {
   );
 }
 
-function shortenString(str: string) {
-  return str.slice(0, 10) + "..." + str.slice(-10);
-}
