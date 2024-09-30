@@ -1,26 +1,21 @@
 import { defaultEthConnectionConfig, OPID_BLOCKCHAIN, OPID_NETWORK, RHS_URL } from "@/constants/common";
-import { AgentResolver, BjjProvider, CredentialStatusResolverRegistry, CredentialStatusType, CredentialStorage, CredentialWallet, EthStateStorage, IdentityStorage, IdentityWallet, IndexedDBDataSource, IndexedDBPrivateKeyStore, IssuerResolver, KMS, KmsKeyType, MerkleTreeIndexedDBStorage, OnChainResolver, OPID_METHOD, RHSResolver } from "@wakeuplabs/opid-sdk";
+import { AgentResolver, BjjProvider, CredentialStatusResolverRegistry, CredentialStatusType, CredentialWallet, IdentityWallet, IndexedDBPrivateKeyStore, IssuerResolver, KMS, KmsKeyType, OnChainResolver, OPID_METHOD, RHSResolver } from "@wakeuplabs/opid-sdk";
+import { Storage } from "./storage";
+
+export type Wallets = {
+  did: string,
+  kms: KMS,
+  wallet: IdentityWallet,
+  credentials: CredentialWallet,
+}
 
 export class WalletService {
-  static async createWallet() {
+  static async init(storage: Storage): Promise<Wallets> {
     const keyStore = new IndexedDBPrivateKeyStore();
     const bjjProvider = new BjjProvider(KmsKeyType.BabyJubJub, keyStore);
-    
+
     const kms = new KMS();
     kms.registerKeyProvider(KmsKeyType.BabyJubJub, bjjProvider);
-
-    const dataStorage = {
-      credential: new CredentialStorage(
-        new IndexedDBDataSource(CredentialStorage.storageKey)
-      ),
-      identity: new IdentityStorage(
-        new IndexedDBDataSource(IdentityStorage.identitiesStorageKey),
-        new IndexedDBDataSource(IdentityStorage.profilesStorageKey)
-      ),
-      mt: new MerkleTreeIndexedDBStorage(40),
-      states: new EthStateStorage(defaultEthConnectionConfig[0])
-
-    };
 
     const resolvers = new CredentialStatusResolverRegistry();
     resolvers.register(
@@ -29,7 +24,7 @@ export class WalletService {
     );
     resolvers.register(
       CredentialStatusType.Iden3ReverseSparseMerkleTreeProof,
-      new RHSResolver(dataStorage.states)
+      new RHSResolver(storage.states)
     );
     resolvers.register(
       CredentialStatusType.Iden3OnchainSparseMerkleTreeProof2023,
@@ -40,10 +35,10 @@ export class WalletService {
       new AgentResolver()
     );
 
-    const credWallet = new CredentialWallet(dataStorage, resolvers);
-    const wallet = new IdentityWallet(kms, dataStorage, credWallet);
+    const credWallet = new CredentialWallet(storage, resolvers);
+    const wallet = new IdentityWallet(kms, storage, credWallet);
 
-    const identities = await dataStorage.identity.getAllIdentities();
+    const identities = await storage.identity.getAllIdentities();
     let did = identities.length ? identities[0].did : undefined;
     if (!did) {
       const identity = await wallet.createIdentity({
@@ -62,8 +57,7 @@ export class WalletService {
       did,
       kms: kms,
       wallet: wallet,
-      credWallet: credWallet,
-      dataStorage: dataStorage
+      credentials: credWallet,
     };
   }
 }
