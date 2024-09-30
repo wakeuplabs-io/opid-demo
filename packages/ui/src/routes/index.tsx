@@ -1,62 +1,97 @@
-import { useOpId } from "@/hooks/use-opid";
+import { AIRDROP_REQUEST_ID } from "@/constants/airdrop";
+import { useOpId, useOpIdAirdrop } from "@/hooks/use-opid-airdrop";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { W3CCredential } from "@wakeuplabs/opid-sdk";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import { useAccount } from "wagmi";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
-  const { wallets } = useOpId();
-  const [credentials, setCredentials] = useState<W3CCredential[]>([]);
+  const { address } = useAccount();
+  const { airdrop } = useOpIdAirdrop();
+  const { wallets, credentials } = useOpId();
 
-  useEffect(() => {
-    if (!wallets) return;
+  const { data: zkpRequest, isLoading: zkpRequestLoading } = useQuery({
+    enabled: !!airdrop && !!address,
+    queryKey: ["zkp-request", address],
+    queryFn: async () => {
+      return await airdrop?.getZKPRequest(AIRDROP_REQUEST_ID, address!);
+    },
+  });
 
-    wallets.credentials.list().then(setCredentials);
-  }, [wallets]);
+  const requestAirdropEnabled = useMemo(() => {
+    return !(zkpRequest?.isVerified || zkpRequestLoading);
+  }, [zkpRequest, zkpRequestLoading]);
+
+  const requestCredentialEnabled = useMemo(() => {
+    return credentials.find((c) => c.type.includes("KYCAgeCredential")) === undefined;
+  }, [credentials]);
 
   return (
-    <div className="max-w-xl mx-auto text-center space-y-10 py-10">
+    <div className="max-w-xl mx-auto w-full text-center space-y-10 py-10 px-4">
       <div>
-        <h2 className="font-bold text-xl ">OPID ERC20 Airdrop demo</h2>
+        <h2 className="font-bold text-xl">OPID ERC20 Airdrop demo</h2>
         <p>
           This demo leverages the OPID identity system to generate and
           distribute OPID Airdrops to users that have a valid KYC credential.
         </p>
-      </div>
-
-      <div className="space-y-2">
-        <h2>Your DID</h2>
-        <div className="border rounded-md bg-gray-50 p-3">
-          <code className="block">{shortenString(wallets?.did ?? "")}</code>
-          {/* TODO: add copy button */}
+        <div className="flex justify-center mt-4">
+          <ConnectButton />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <h2>Your credentials.</h2>
-        <button className="btn btn-neutral w-full">
-          Request KYCAgeCredential credential
-        </button>
-        {credentials.map((credential) => (
-          <div className="border rounded-md bg-gray-50 p-3" key={credential.id}>
-            <code className="block">{shortenString(credential.id)}</code>
-            <code className="block">{shortenString(credential.issuer)}</code>
-            <code className="block">{credential.type}</code>
-            <code className="block">{credential.issuanceDate}</code>
+      {address && <>
+        <div className="space-y-2">
+          <h2>Your DID</h2>
+          <div className="border rounded-md bg-gray-50 p-3">
+            <code className="block">{shortenString(wallets?.did ?? "")}</code>
+            {/* TODO: add copy button */}
           </div>
-        ))}
-      </div>
-
-      <div className="space-y-2">
-        <h2>ERC20 Airdrop</h2>
-        <button className="btn btn-neutral w-full">Request airdrop</button>
-        <div className="border rounded-md bg-gray-50 p-3">
-          <code className="block">Proof status and other details...</code>
         </div>
-      </div>
+
+        <div className="space-y-2">
+          <h2>Your credentials</h2>
+          {requestCredentialEnabled && (
+            <button className="btn btn-neutral w-full">
+            Request KYCAgeCredential credential
+            </button>
+          )}
+          {credentials.map((credential) => (
+            <div className="border rounded-md bg-gray-50 p-3" key={credential.id}>
+              <code className="block">{shortenString(credential.id)}</code>
+              <code className="block">{shortenString(credential.issuer)}</code>
+              <code className="block">{credential.type}</code>
+              <code className="block">{credential.issuanceDate}</code>
+            </div>
+          ))}
+        </div>
+
+        <div className="space-y-2">
+          <h2>ERC20 Airdrop</h2>
+          {requestAirdropEnabled && (
+            <button className="btn btn-neutral w-full">Request airdrop</button>
+          )}
+          <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+            {zkpRequestLoading ? (
+              <p>Loading...</p>
+            ) : (
+              <>
+                <code className="block">
+                Verified: {String(zkpRequest?.isVerified ?? false)}
+                </code>
+                <code className="block">
+                Metadata: <br /> {JSON.stringify(zkpRequest?.metadata)}
+                </code>
+              </>
+            )}
+          </div>
+        </div>
+      </>}
+
     </div>
   );
 }
