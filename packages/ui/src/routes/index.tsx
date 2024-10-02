@@ -14,6 +14,8 @@ import { shortenString } from "@/utils/strings";
 import { core } from "@wakeuplabs/opid-sdk";
 import { formatUnits } from "ethers";
 import { kycAgeClaimIssuer } from "@/services/kyc-age-issuer";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -25,6 +27,9 @@ function Index() {
   const { airdrop } = useOpIdAirdrop();
   const { wallets, credentials, saveCredentials } = useOpId();
 
+  const { copyToClipboard, copied } = useCopyToClipboard({ timeout: 1000 });
+
+  // load airdrop status
   const { data: zkpRequest, isLoading: zkpRequestLoading } = useQuery({
     enabled: !!airdrop && !!address,
     queryKey: ["zkp-request", address ?? "0x"],
@@ -34,30 +39,28 @@ function Index() {
     },
   });
 
+  // claim kyc age credential
   const { mutate: claimCredential, isPending: claimCredentialPending } =
     useMutation({
       mutationFn: async () => {
         if (!wallets || !credentials) return;
 
-        // create credential
+        // create credential and publish state
+        // It's worth mentioning that for demo porpoises we are blindly trusting user is worthy.
+        // in real world case issuer should run their own checks to have a bigger trust from validators
         await kycAgeClaimIssuer.createKycAgeClaim(wallets.did, 19960424);
-        console.log("created");
+        await kycAgeClaimIssuer.publishIssuerState();
 
-        // publish state
-        const txID = await kycAgeClaimIssuer.publishIssuerState();
-        console.log("txID", txID);
-
-        // fetch and save credentials
-        const kycAgeCredentials = await kycAgeClaimIssuer.getKycAgeClaims(
-          wallets.did
+        // fetch and save credentials locally
+        await saveCredentials(
+          await kycAgeClaimIssuer.getKycAgeClaims(wallets.did)
         );
-        console.log("kycAgeCredentials", kycAgeCredentials);
-        await saveCredentials(kycAgeCredentials);
       },
       onSuccess: () => alert("Credential claim was successful"),
       onError: () => alert("Credential claim failed"),
     });
 
+  // generate credential proof and claim airdrop with it
   const { mutate: claimAirdrop, isPending: claimAirdropPending } = useMutation({
     mutationFn: async () => {
       if (!airdrop || !address || !wallets) return;
@@ -80,16 +83,17 @@ function Index() {
     },
   });
 
-  const copyDidToClipboard = useCallback(() => {
-    navigator.clipboard.writeText(wallets?.did ?? "");
+  const copyDid = useCallback(() => {
+    if (!wallets?.did) return;
+    copyToClipboard(wallets.did);
+  }, [wallets?.did, copyToClipboard]);
 
-    alert("DID copied to clipboard");
-  }, [wallets?.did]);
-
+  // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
   const requestAirdropEnabled = useMemo(() => {
     return !(zkpRequest?.isVerified || zkpRequestLoading);
   }, [zkpRequest, zkpRequestLoading]);
 
+  // if we already have a valid credential prevent spamming by disabling request
   const requestCredentialEnabled = useMemo(() => {
     return (
       credentials.find((c) => c.type.includes("KYCAgeCredential")) === undefined
@@ -105,90 +109,102 @@ function Index() {
           distribute tokens to users that have a valid KYC Age credential.
         </p>
         <div className="flex justify-center mt-4">
-          <ConnectButton />
+          <ConnectButton showBalance={true} />
         </div>
       </div>
 
       {address && (
         <>
+          {/* did section */}
           <div className="space-y-2">
-            <h2>Your DID</h2>
+            <h2 className="font-bold">Your DID</h2>
             <button
-              onClick={copyDidToClipboard}
+              disabled={copied}
+              onClick={copyDid}
               className="btn btn-neutral w-full"
             >
-              Copy DID
+              {copied ? "Copied" : "Copy DID"}
             </button>
             <div className="border rounded-md bg-gray-50 p-3">
-              <code className="block">{shortenString(wallets?.did ?? "")}</code>
+              <code className="block">
+                {shortenString(wallets?.did ?? "-")}
+              </code>
             </div>
           </div>
 
+          {/* credentials section */}
           <div className="space-y-2">
-            <h2>Your credentials</h2>
+            <h2 className="font-bold">Your credentials</h2>
+
             {requestCredentialEnabled && (
-              <button
-                disabled={claimCredentialPending}
+              <Button
+                loading={claimCredentialPending}
                 onClick={() => claimCredential()}
                 className="btn btn-neutral w-full"
               >
-                {claimCredentialPending && (
-                  <span className="loading loading-sm loading-spinner"></span>
-                )}
                 Request KYCAgeCredential credential
-              </button>
+              </Button>
             )}
-            {credentials.map((credential) => (
-              <div
-                className="border rounded-md bg-gray-50 p-3"
-                key={credential.id}
-              >
-                <code className="block">{shortenString(credential.id)}</code>
-                <code className="block">
-                  {shortenString(credential.issuer)}
-                </code>
-                <code className="block">{credential.type}</code>
-                <code className="block">{credential.issuanceDate}</code>
-              </div>
-            ))}
+
+            <ul className="space-y-2">
+              {credentials.map((credential) => (
+                <li
+                  key={credential.id}
+                  className="border rounded-md bg-gray-50 p-3"
+                >
+                  <code className="block">{shortenString(credential.id)}</code>
+                  <code className="block">
+                    {shortenString(credential.issuer)}
+                  </code>
+                  <code className="block">{credential.type}</code>
+                  <code className="block">{credential.issuanceDate}</code>
+                </li>
+              ))}
+            </ul>
           </div>
 
+          {/* airdrop section */}
           <div className="space-y-2">
-            <h2>ERC20 Airdrop</h2>
+            <h2 className="font-bold">ERC20 Airdrop</h2>
+
             {requestAirdropEnabled && (
-              <button
-                disabled={claimAirdropPending}
+              <Button
+                loading={claimAirdropPending}
                 onClick={() => claimAirdrop()}
                 className="btn btn-neutral w-full"
               >
-                {claimAirdropPending && (
-                  <span className="loading loading-sm loading-spinner"></span>
-                )}
                 Request airdrop
-              </button>
+              </Button>
             )}
-            <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
-              {zkpRequestLoading ? (
-                <p>Loading...</p>
-              ) : (
-                <>
-                  <code className="block">
+
+            {zkpRequestLoading ? (
+              <p>Loading...</p>
+            ) : (
+              <>
+                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                  <code>
                     Balance:{" "}
                     {formatUnits(
                       zkpRequest?.balance ?? 0,
                       OPID_AIRDROP_DECIMALS
                     )}
                   </code>
-                  <code className="block">
+                </div>
+                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                  <code>
                     Verified: {String(zkpRequest?.isVerified ?? false)}
                   </code>
-                  <code className="block">Token: {OPID_AIRDROP_ADDRESS}</code>
-                  <code className="block">
+                </div>
+                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                  <code>Token: {OPID_AIRDROP_ADDRESS}</code>
+                </div>
+                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                  <code>
                     Metadata: <br /> {JSON.stringify(zkpRequest?.metadata)}
                   </code>
-                </>
-              )}
-            </div>
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

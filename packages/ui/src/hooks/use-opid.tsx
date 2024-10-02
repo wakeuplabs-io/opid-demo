@@ -9,7 +9,6 @@ import React, {
 } from "react";
 import { W3CCredential } from "@wakeuplabs/opid-sdk";
 
-// Define the shape of the context value
 interface OpIdContextType {
   storage?: Storage;
   wallets?: Wallets;
@@ -17,12 +16,10 @@ interface OpIdContextType {
   saveCredentials: (credentials: W3CCredential[]) => Promise<void>;
 }
 
-// Create the Context with a default value
 const OpIdContext = createContext<OpIdContextType | undefined>(
   undefined
 );
 
-// Create a Provider component
 export const OpIdProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
@@ -44,9 +41,9 @@ export const OpIdProvider: React.FC<{ children: ReactNode }> = ({
     init();
   }, []);
 
-  const saveCredentials = async (creds: W3CCredential[]) => {
-    await wallets?.credentials.saveAll(creds);
-    setCredentials([...credentials, ...creds]);
+  const saveCredentials = async (credentials: W3CCredential[]) => {
+    await wallets?.credentials.saveAll(credentials);
+    setCredentials((creds) => [...credentials, ...creds]);
   };
 
   return (
@@ -59,7 +56,7 @@ export const OpIdProvider: React.FC<{ children: ReactNode }> = ({
 export const useOpId = (): OpIdContextType => {
   const context = useContext(OpIdContext);
   if (!context) {
-    throw new Error("useOpIdAirdrop must be used within a OpIdAirdropProvider");
+    throw new Error("useOpId must be used within a OpIdProvider");
   }
   return context;
 };
