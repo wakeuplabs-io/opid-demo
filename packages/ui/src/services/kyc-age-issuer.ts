@@ -1,7 +1,6 @@
 import { W3CCredential } from "@wakeuplabs/opid-sdk";
 import axios, { AxiosInstance } from "axios";
 
-
 export class KycAgeClaimIssuer {
   private api: AxiosInstance;
   private readonly issuerDid: string;
