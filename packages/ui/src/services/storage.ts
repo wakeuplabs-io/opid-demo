@@ -1,13 +1,12 @@
-import { defaultEthConnectionConfig } from "@/constants";
-import {  CircuitStorage, CredentialStorage, EthStateStorage, ICircuitStorage, ICredentialStorage, IdentityStorage, IIdentityStorage, IMerkleTreeStorage, IndexedDBDataSource, IStateStorage, MerkleTreeIndexedDBStorage } from "@wakeuplabs/opid-sdk";
+import { defaultEthConnectionConfig } from "@/constants/common";
+import {  CredentialStorage, EthStateStorage, IdentityStorage, IndexedDBDataSource, MerkleTreeIndexedDBStorage } from "@wakeuplabs/opid-sdk";
 
 
 export type Storage = {
-    credential: ICredentialStorage;
-    identity: IIdentityStorage;
-    mt: IMerkleTreeStorage;
-    circuits: ICircuitStorage;
-    states: IStateStorage;
+    credential: CredentialStorage;
+    identity: IdentityStorage;
+    mt: MerkleTreeIndexedDBStorage;
+    states: EthStateStorage;
 }
 
 export class StorageService {
@@ -21,9 +20,6 @@ export class StorageService {
         new IndexedDBDataSource(IdentityStorage.profilesStorageKey)
       ),
       mt: new MerkleTreeIndexedDBStorage(40),
-      circuits: new CircuitStorage(
-        new IndexedDBDataSource(CircuitStorage.storageKey)
-      ),
       states: new EthStateStorage(defaultEthConnectionConfig[0])
 
     };

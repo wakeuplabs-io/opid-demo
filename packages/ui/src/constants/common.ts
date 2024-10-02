@@ -2,7 +2,7 @@ export const RHS_URL = "https://rhs-staging.polygonid.me"; // TODO:";
 export const OPID_BLOCKCHAIN = "optimism";
 export const OPID_NETWORK = "sepolia";
 export const OPID_CHAIN_ID = 11155420;
-export const RPC_URL = import.meta.env.VITE_RPC_URL;
+export const RPC_URL = "TODO:";
 
 export const defaultEthConnectionConfig =  [{
   url: RPC_URL,

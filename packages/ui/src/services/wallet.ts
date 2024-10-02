@@ -1,11 +1,11 @@
-import { defaultEthConnectionConfig, OPID_BLOCKCHAIN, OPID_NETWORK, RHS_URL } from "@/constants";
+import { defaultEthConnectionConfig, OPID_BLOCKCHAIN, OPID_NETWORK, RHS_URL } from "@/constants/common";
 import { AgentResolver, BjjProvider, CredentialStatusResolverRegistry, CredentialStatusType, CredentialWallet, IdentityWallet, IndexedDBPrivateKeyStore, IssuerResolver, KMS, KmsKeyType, OnChainResolver, OPID_METHOD, RHSResolver } from "@wakeuplabs/opid-sdk";
 import { Storage } from "./storage";
 
 export type Wallets = {
   did: string,
   kms: KMS,
-  identity: IdentityWallet,
+  wallet: IdentityWallet,
   credentials: CredentialWallet,
 }
 
@@ -35,13 +35,13 @@ export class WalletService {
       new AgentResolver()
     );
 
-    const credentials = new CredentialWallet(storage, resolvers);
-    const identity = new IdentityWallet(kms, storage, credentials);
+    const credWallet = new CredentialWallet(storage, resolvers);
+    const wallet = new IdentityWallet(kms, storage, credWallet);
 
     const identities = await storage.identity.getAllIdentities();
     let did = identities.length ? identities[0].did : undefined;
     if (!did) {
-      const iden = await identity.createIdentity({
+      const identity = await wallet.createIdentity({
         method: OPID_METHOD,
         blockchain: OPID_BLOCKCHAIN,
         networkId: OPID_NETWORK,
@@ -50,14 +50,14 @@ export class WalletService {
           id: RHS_URL
         }
       });
-      did = iden.did.string();
+      did = identity.did.string();
     }
 
     return {
       did,
       kms: kms,
-      identity,
-      credentials,
+      wallet: wallet,
+      credentials: credWallet,
     };
   }
 }
