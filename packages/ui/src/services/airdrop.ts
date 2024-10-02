@@ -39,12 +39,14 @@ export class AirdropService {
           allowedIssuers: ["*"],
           context:
             "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-          credentialSubject: { birthday: { $lt: 20020101 } },
+          credentialSubject: { birthday: {} },
           type: "KYCAgeCredential",
-          proofType: 0,
+          proofType: 1,
           skipClaimRevocationCheck: false
         },
-        params: { nullifierSessionId: 0 }
+        params: {
+          nullifierSessionId: 0,
+        }
       },
       userDID,
       {

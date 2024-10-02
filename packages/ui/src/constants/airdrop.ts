@@ -3,7 +3,7 @@ import { OPID_BLOCKCHAIN, OPID_NETWORK } from "./opid";
 
 export const AIRDROP_REQUEST_ID = 3;
 
-export const OPID_AIRDROP_ADDRESS = "0xca6bfa62791d3c7c7ed1a5b320018c1C1dAC89Ee";
+export const OPID_AIRDROP_ADDRESS = "0x9B786F6218FFF6d9742f22426cF4bDDC6F8cb9f8";
 export const OPID_AIRDROP_DECIMALS = 18;
 
 export const ERC20_VERIFIER_ID = buildVerifierId(OPID_AIRDROP_ADDRESS, {
