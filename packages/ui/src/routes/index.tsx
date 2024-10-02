@@ -77,10 +77,7 @@ function Index() {
       });
       alert("Airdrop request was successful");
     },
-    onError: (e) => {
-      alert("Airdrop request failed");
-      console.log(e);
-    },
+    onError: () =>  alert("Airdrop request failed")
   });
 
   const copyDid = useCallback(() => {
