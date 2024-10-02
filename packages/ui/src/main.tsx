@@ -1,4 +1,5 @@
 import "./index.css";
+import "@rainbow-me/rainbowkit/styles.css";
 import ProvidersWrapper from "@/hoc/providers-wrapper.tsx";
 import React from "react";
 import ReactDOM from "react-dom/client";
