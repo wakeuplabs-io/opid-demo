@@ -1,3 +1,4 @@
+import { OpIdProvider } from "@/hooks/use-opid";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 
@@ -8,5 +9,9 @@ interface ProvidersWrapperProps {
 }
 
 export default function ProvidersWrapper({ children }: ProvidersWrapperProps) {
-  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <OpIdProvider>{children}</OpIdProvider>
+    </QueryClientProvider>
+  );
 }
