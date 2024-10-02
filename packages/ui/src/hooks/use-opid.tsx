@@ -14,6 +14,7 @@ interface OpIdContextType {
   storage?: Storage;
   wallets?: Wallets;
   credentials: W3CCredential[];
+  saveCredentials: (credentials: W3CCredential[]) => Promise<void>;
 }
 
 // Create the Context with a default value
@@ -31,7 +32,7 @@ export const OpIdProvider: React.FC<{ children: ReactNode }> = ({
 
   useEffect(() => {
     async function init() {
-      const storage = StorageService.init();
+      const storage = await StorageService.init();
       const wallets = await WalletService.init(storage);
       const credentials = await wallets.credentials.list();
 
@@ -43,8 +44,13 @@ export const OpIdProvider: React.FC<{ children: ReactNode }> = ({
     init();
   }, []);
 
+  const saveCredentials = async (creds: W3CCredential[]) => {
+    await wallets?.credentials.saveAll(creds);
+    setCredentials([...credentials, ...creds]);
+  };
+
   return (
-    <OpIdContext.Provider value={{ storage, wallets, credentials }}>
+    <OpIdContext.Provider value={{ storage, wallets, credentials, saveCredentials }}>
       {children}
     </OpIdContext.Provider>
   );

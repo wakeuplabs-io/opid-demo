@@ -23,7 +23,6 @@ export class AirdropService {
     this.REQUEST_ID = requestId;
     this.ERC20_VERIFIER_DID = erc20VerifierDid;
 
-    // const prov = new ethers.JsonRpcProvider("https://opt-sepolia.g.alchemy.com/v2/NvmmU_WYKNBUlmYf1NqM6T_jvEBF5x7l")
     this.airdrop = new ethers.Contract(airdropAddress, Erc20AirdropAbi, ethersSigner);
     this.proofService = new ProofService(identityWallet, credentialWallet, circuitStorage, stateStorage, {
       ipfsGatewayURL: "https://ipfs.io"

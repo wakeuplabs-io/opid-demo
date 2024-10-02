@@ -11,4 +11,5 @@ export const ERC20_VERIFIER_ID = buildVerifierId(OPID_AIRDROP_ADDRESS, {
   networkId: OPID_NETWORK,
   method: OPID_METHOD
 });
+
 export const ERC20_VERIFIER_DID = core.DID.parseFromId(ERC20_VERIFIER_ID);

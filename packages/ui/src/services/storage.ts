@@ -1,5 +1,5 @@
 import { defaultEthConnectionConfig } from "@/constants";
-import {  CircuitStorage, CredentialStorage, EthStateStorage, ICircuitStorage, ICredentialStorage, IdentityStorage, IIdentityStorage, IMerkleTreeStorage, IndexedDBDataSource, IStateStorage, MerkleTreeIndexedDBStorage } from "@wakeuplabs/opid-sdk";
+import {  CircuitId, CircuitStorage, CredentialStorage, EthStateStorage, ICircuitStorage, ICredentialStorage, IdentityStorage, IIdentityStorage, IMerkleTreeStorage, IndexedDBDataSource, IStateStorage, MerkleTreeIndexedDBStorage } from "@wakeuplabs/opid-sdk";
 
 
 export type Storage = {
@@ -11,7 +11,7 @@ export type Storage = {
 }
 
 export class StorageService {
-  static init(): Storage {
+  static async init(): Promise<Storage> {
     const dataStorage = {
       credential: new CredentialStorage(
         new IndexedDBDataSource(CredentialStorage.storageKey)
@@ -27,6 +27,27 @@ export class StorageService {
       states: new EthStateStorage(defaultEthConnectionConfig[0])
 
     };
+
+    // load circuits
+    const [v3_w, v3_z, v3_j] = await Promise.all([
+      fetch(`./${CircuitId.AtomicQueryV3OnChain}/circuit.wasm`)
+        .then((response) => response.arrayBuffer())
+        .then((buffer) => new Uint8Array(buffer)),
+      fetch(`./${CircuitId.AtomicQueryV3OnChain}/circuit_final.zkey`)
+        .then((response) => response.arrayBuffer())
+        .then((buffer) => new Uint8Array(buffer)),
+      fetch(`./${CircuitId.AtomicQueryV3OnChain}/verification_key.json`)
+        .then((response) => response.arrayBuffer())
+        .then((buffer) => new Uint8Array(buffer)),
+    ]);
+
+    await dataStorage.circuits.saveCircuitData(CircuitId.AtomicQueryV3OnChain, {
+      circuitId: CircuitId.AtomicQueryV3OnChain,
+      wasm: v3_w,
+      provingKey: v3_z,
+      verificationKey: v3_j,
+    });
+
     return dataStorage;
   }
 }

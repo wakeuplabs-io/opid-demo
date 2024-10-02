@@ -11,9 +11,9 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { shortenString } from "@/utils/strings";
-import { core, W3CCredential } from "@wakeuplabs/opid-sdk";
+import { core } from "@wakeuplabs/opid-sdk";
 import { formatUnits } from "ethers";
-import axios from "axios";
+import { kycAgeClaimIssuer } from "@/services/kyc-age-issuer";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -23,7 +23,7 @@ function Index() {
   const { address } = useAccount();
   const queryClient = useQueryClient();
   const { airdrop } = useOpIdAirdrop();
-  const { wallets, credentials } = useOpId();
+  const { wallets, credentials, saveCredentials } = useOpId();
 
   const { data: zkpRequest, isLoading: zkpRequestLoading } = useQuery({
     enabled: !!airdrop && !!address,
@@ -34,12 +34,36 @@ function Index() {
     },
   });
 
-  const { mutate: claimAirdrop } = useMutation({
+  const { mutate: claimCredential, isPending: claimCredentialPending } =
+    useMutation({
+      mutationFn: async () => {
+        if (!wallets || !credentials) return;
+
+        // create credential
+        await kycAgeClaimIssuer.createKycAgeClaim(wallets.did, 19960424);
+        console.log("created");
+
+        // publish state
+        const txID = await kycAgeClaimIssuer.publishIssuerState();
+        console.log("txID", txID);
+
+        // fetch and save credentials
+        const kycAgeCredentials = await kycAgeClaimIssuer.getKycAgeClaims(
+          wallets.did
+        );
+        console.log("kycAgeCredentials", kycAgeCredentials);
+        await saveCredentials(kycAgeCredentials);
+      },
+      onSuccess: () => alert("Credential claim was successful"),
+      onError: () => alert("Credential claim failed"),
+    });
+
+  const { mutate: claimAirdrop, isPending: claimAirdropPending } = useMutation({
     mutationFn: async () => {
-      if (!airdrop || !address) return;
+      if (!airdrop || !address || !wallets) return;
 
       const proof = await airdrop.generateProof(
-        core.DID.parse(wallets?.did ?? ""),
+        core.DID.parse(wallets.did),
         address!
       );
       return await airdrop.submitPoof(AIRDROP_REQUEST_ID, proof);
@@ -50,68 +74,10 @@ function Index() {
       });
       alert("Airdrop request was successful");
     },
-    onError: () => alert("Airdrop request failed"),
-  });
-
-  const { mutate: claimCredential } = useMutation({
-    mutationFn: async () => {
-      if (!wallets || !credentials) return;
-
-      const {
-        data: { id },
-      } = await axios.post(
-        "https://opid-api.loca.lt/v1/credentials",
-        {
-          credentialSchema:
-            "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCAgeCredential-v3.json",
-          type: "KYCAgeCredential",
-          credentialSubject: {
-            id: wallets.did,
-            birthday: 19960424,
-            documentType: 2,
-          },
-          expiration: "2024-09-30T15:05:05.657Z",
-          signatureProof: true,
-          mtProof: true,
-        },
-        {
-          headers: {
-            accept: "application/json",
-            authorization: "Basic dXNlci1hcGk6cGFzc3dvcmQtYXBp",
-            "content-type": "application/json",
-          },
-        }
-      );
-
-      const { data: credential } = await axios.get(
-        `https://opid-api.loca.lt/v1/credentials/${id}`,
-        {
-          headers: {
-            accept: "application/json",
-            authorization: "Basic dXNlci1hcGk6cGFzc3dvcmQtYXBp",
-            "content-type": "application/json",
-          },
-        }
-      );
-
-      // publish state
-      await axios.post(
-        "https://opid-api.loca.lt/v1/state/publish",
-        {},
-        {
-          headers: {
-            accept: "application/json",
-            authorization: "Basic dXNlci1hcGk6cGFzc3dvcmQtYXBp",
-            "content-type": "application/json",
-          },
-        }
-      );
-
-
-      // await wallets?.credentials.createCredential("", credential, )
+    onError: (e) => {
+      alert("Airdrop request failed");
+      console.log(e);
     },
-    onSuccess: () => alert("Credential claim was successful"),
-    onError: () => alert("Credential claim failed"),
   });
 
   const copyDidToClipboard = useCallback(() => {
@@ -161,7 +127,14 @@ function Index() {
           <div className="space-y-2">
             <h2>Your credentials</h2>
             {requestCredentialEnabled && (
-              <button onClick={() => claimCredential()} className="btn btn-neutral w-full">
+              <button
+                disabled={claimCredentialPending}
+                onClick={() => claimCredential()}
+                className="btn btn-neutral w-full"
+              >
+                {claimCredentialPending && (
+                  <span className="loading loading-sm loading-spinner"></span>
+                )}
                 Request KYCAgeCredential credential
               </button>
             )}
@@ -184,9 +157,13 @@ function Index() {
             <h2>ERC20 Airdrop</h2>
             {requestAirdropEnabled && (
               <button
+                disabled={claimAirdropPending}
                 onClick={() => claimAirdrop()}
                 className="btn btn-neutral w-full"
               >
+                {claimAirdropPending && (
+                  <span className="loading loading-sm loading-spinner"></span>
+                )}
                 Request airdrop
               </button>
             )}
