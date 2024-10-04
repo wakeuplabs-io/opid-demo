@@ -23,7 +23,6 @@ export class AirdropService {
     this.REQUEST_ID = requestId;
     this.ERC20_VERIFIER_DID = erc20VerifierDid;
 
-    // const prov = new ethers.JsonRpcProvider("https://opt-sepolia.g.alchemy.com/v2/NvmmU_WYKNBUlmYf1NqM6T_jvEBF5x7l")
     this.airdrop = new ethers.Contract(airdropAddress, Erc20AirdropAbi, ethersSigner);
     this.proofService = new ProofService(identityWallet, credentialWallet, circuitStorage, stateStorage, {
       ipfsGatewayURL: "https://ipfs.io"
@@ -40,12 +39,14 @@ export class AirdropService {
           allowedIssuers: ["*"],
           context:
             "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-          credentialSubject: { birthday: { $lt: 20020101 } },
+          credentialSubject: { birthday: {} },
           type: "KYCAgeCredential",
-          proofType: 0,
+          proofType: 1,
           skipClaimRevocationCheck: false
         },
-        params: { nullifierSessionId: 0 }
+        params: {
+          nullifierSessionId: 0,
+        }
       },
       userDID,
       {
