@@ -80,7 +80,6 @@ function Index() {
     onError: () =>  alert("Airdrop request failed")
   });
 
-
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
   const requestAirdropEnabled = useMemo(() => {
     return !(zkpRequest?.isVerified || zkpRequestLoading);

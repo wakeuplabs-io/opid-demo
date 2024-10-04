@@ -1,3 +1,23 @@
+
+# OPID Zk Erc20 Airdrop Demo
+
+Demo to showcase the usage of the Optimism Zk Identity kit. 
+
+In this case we showcase an airdrop workflow using the Selective Disclosure verifier and the Issuer Node. The idea is users can come to the website, issue a KycAge credential for them and later claim the Airdrop. A small demo here:
+
+<video controls>
+  <source src="./readme-assets/demo.mp4" type="video/mp4">
+</video>
+
+The contracts used for this demo can be found here: https://github.com/wakeuplabs-io/opid-contracts-examples
+
+
+## Notes
+
+Just for demo porpoises we made the following simplifications
+- Website directly reaches the issuer node with admin credentials and publishes the state. This means any user can claim they're worthy even if they're not. In a real production case the issuer would restrict the issuance and run the proper checks to certify the user claims. Not a system requirement but just to reinforce verifiers trust on the credential itself.
+- Identity wallet is created locally and there's no recovery flow. In a real production case users would need to keep their identity safe. 
+
 # React Monorepo Template
 
 ## Node and NPM version
