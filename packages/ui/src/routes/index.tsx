@@ -80,10 +80,6 @@ function Index() {
     onError: () =>  alert("Airdrop request failed")
   });
 
-  const copyDid = useCallback(() => {
-    if (!wallets?.did) return;
-    copyToClipboard(wallets.did);
-  }, [wallets?.did, copyToClipboard]);
 
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
   const requestAirdropEnabled = useMemo(() => {
@@ -117,7 +113,7 @@ function Index() {
             <h2 className="font-bold">Your DID</h2>
             <button
               disabled={copied}
-              onClick={copyDid}
+              onClick={() => wallets?.did && copyToClipboard(wallets.did)}
               className="btn btn-neutral w-full"
             >
               {copied ? "Copied" : "Copy DID"}
