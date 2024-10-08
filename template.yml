@@ -10,12 +10,6 @@ Parameters:
   DomainName:
     Description: The domain name of the existing Route 53 hosted zone, should match HostedZoneId
     Type: String
-  HostedZoneId:
-    Description: The ID of the existing Route 53 hosted zone, should match DomainName
-    Type: String
-  CertificateId:
-    Description: The ID of the existing certificate related to the domain name
-    Type: String
 
 Resources:
   UI:
@@ -25,8 +19,6 @@ Resources:
       Parameters:
         StackName: !Ref StackName
         DomainName: !Ref DomainName
-        HostedZoneId: !Ref HostedZoneId
-        CertificateId: !Ref CertificateId
 
 Outputs:
   UIUrl:
