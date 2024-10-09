@@ -1,12 +1,14 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  React Monorepo Template
+  Optimism ID demo template
 
 Parameters:
   StackName:
+    Description: The cloudformation stack name, MUST be lower case
     Type: String
   DomainName:
+    Description: The domain name of the existing Route 53 hosted zone, should match HostedZoneId
     Type: String
 
 Resources:
@@ -19,6 +21,6 @@ Resources:
         DomainName: !Ref DomainName
 
 Outputs:
-  CloudFrontDistributionId:
-    Description: "CloudFront Distribution ID from the UI stack"
-    Value: !GetAtt UI.Outputs.CloudFrontDistributionId
+  UIUrl:
+    Description: UI public access URL
+    Value: !GetAtt UI.Outputs.Url

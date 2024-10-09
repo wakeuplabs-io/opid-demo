@@ -8,7 +8,7 @@ import { useOpId } from "@/hooks/use-opid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useAccount } from "wagmi";
 import { shortenString } from "@/utils/strings";
 import { core } from "@wakeuplabs/opid-sdk";
