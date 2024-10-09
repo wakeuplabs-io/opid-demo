@@ -21,6 +21,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Generate .env file
+        working-directory: ./packages/ui
+        run: |
+          echo "VITE_RPC_URL=${{ secrets.RPC_URL }}" >> .env
+          echo "VITE_WALLET_CONNECT_ID=${{ secrets.WALLET_CONNECT_ID }}" >> .env
+          echo "VITE_ISSUER_URL=${{ secrets.ISSUER_URL }}" >> .env
+          echo "VITE_ISSUER_DID=${{ secrets.ISSUER_DID }}" >> .env
+          echo "VITE_ISSUER_USER=${{ secrets.ISSUER_USER }}" >> .env
+          echo "VITE_ISSUER_PASSWORD=${{ secrets.ISSUER_PASSWORD }}" >> .env
+          cat .env
+
       - name: Build all
         run: pnpm build
 
