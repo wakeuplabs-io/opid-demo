@@ -14,7 +14,7 @@ The contracts used for this demo can be found here: https://github.com/wakeuplab
 
 ## Notes
 
-Just for demo porpoises we made the following simplifications
+Just for demo purposes we made the following simplifications
 - Website directly reaches the issuer node with admin credentials and publishes the state. This means any user can claim they're worthy even if they're not. In a real production case the issuer would restrict the issuance and run the proper checks to certify the user claims. Not a system requirement but just to reinforce verifiers trust on the credential itself.
 - Identity wallet is created locally and there's no recovery flow. In a real production case users would need to keep their identity safe. 
 
