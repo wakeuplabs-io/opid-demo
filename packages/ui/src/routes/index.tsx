@@ -5,18 +5,17 @@ import {
 } from "@/constants/airdrop";
 import { useOpIdAirdrop } from "@/hooks/use-opid-airdrop";
 import { useOpId } from "@/hooks/use-opid";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { useAccount } from "wagmi";
-import { shortenString } from "@/utils/strings";
 import { core } from "@wakeuplabs/opid-sdk";
 import { formatUnits } from "ethers";
 import { kycAgeClaimIssuer } from "@/services/kyc-age-issuer";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@/components/ui/button";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { ConnectWalletButton } from "@/components/connect-wallet";
+import { CopyButton } from "@/components/copy-button";
+import { shortenString } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -27,10 +26,6 @@ function Index() {
   const queryClient = useQueryClient();
   const { airdrop } = useOpIdAirdrop();
   const { wallets, credentials, saveCredentials } = useOpId();
-
-  const { copy: copyDid, copied: didCopied } = useCopyToClipboard({ timeout: 1000 });
-  const { copy: copyToken, copied: tokenCopied } = useCopyToClipboard({ timeout: 1000 });
-  const { copy: copyMetadata, copied: metadataCopied } = useCopyToClipboard({ timeout: 1000 });
 
   // load airdrop status
   const { data: zkpRequest, isLoading: zkpRequestLoading } = useQuery({
@@ -103,133 +98,111 @@ function Index() {
           This demo leverages the OPID identity system to generate and
           distribute tokens to users that have a valid KYC Age credential.
         </p>
-        <div className="flex justify-center mt-4">
-          <ConnectButton showBalance={true} />
-        </div>
       </div>
 
-      {address && (
-        <>
-          {/* did section */}
-          <div className="space-y-2">
-            <h2 className="font-bold">Your DID</h2>
-            <div className="border rounded-md bg-gray-50 p-3 relative">
-              <code className="block">
-                {shortenString(wallets?.did ?? "-")}
-              </code>
-              <button
-                disabled={didCopied}
-                onClick={() => wallets?.did && copyDid(wallets.did)}
-                className="h-10 w-10 p-0 flex justify-center items-center absolute right-1 top-1/2 -translate-y-1/2"
-              >
-                {didCopied ? (
-                  <CheckIcon className="h-4 w-4" />
-                ) : (
-                  <CopyIcon className="h-4 w-4" />
-                )}
-              </button>
-            </div>
+      <>
+        {/* did section */}
+        <div className="space-y-2">
+          <h2 className="font-bold">Your DID</h2>
+          <div className="border rounded-md bg-gray-50 p-3 relative">
+            <code className="block">{shortenString(wallets?.did ?? "-")}</code>
+            <CopyButton
+              value={wallets?.did}
+              className="absolute right-1 top-1/2 -translate-y-1/2"
+            />
           </div>
+        </div>
 
-          {/* credentials section */}
-          <div className="space-y-2">
-            <h2 className="font-bold">Your credentials</h2>
+        {/* credentials section */}
+        <div className="space-y-2">
+          <h2 className="font-bold">Your credentials</h2>
 
-            {requestCredentialEnabled && (
-              <Button
-                loading={claimCredentialPending}
-                onClick={() => claimCredential()}
-                className="btn btn-neutral w-full"
+          {requestCredentialEnabled && (
+            <Button
+              loading={claimCredentialPending}
+              onClick={() => claimCredential()}
+              className="btn btn-neutral w-full"
+            >
+              Request KYCAgeCredential credential
+            </Button>
+          )}
+
+          <ul className="space-y-2">
+            {credentials.map((credential) => (
+              <li
+                key={credential.id}
+                className="border rounded-md bg-gray-50 p-3"
               >
-                Request KYCAgeCredential credential
-              </Button>
-            )}
+                <code className="block">{shortenString(credential.id)}</code>
+                <code className="block">
+                  {shortenString(credential.issuer)}
+                </code>
+                <code className="block">{credential.type}</code>
+                <code className="block">{credential.issuanceDate}</code>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-            <ul className="space-y-2">
-              {credentials.map((credential) => (
-                <li
-                  key={credential.id}
-                  className="border rounded-md bg-gray-50 p-3"
+        {/* airdrop section */}
+
+        <div className="space-y-2">
+          <h2 className="font-bold">ERC20 Airdrop</h2>
+          <ConnectWalletButton />
+
+          {address && (
+            <>
+              {requestAirdropEnabled && (
+                <Button
+                  loading={claimAirdropPending}
+                  onClick={() => claimAirdrop()}
+                  className="btn btn-neutral w-full"
                 >
-                  <code className="block">{shortenString(credential.id)}</code>
-                  <code className="block">
-                    {shortenString(credential.issuer)}
-                  </code>
-                  <code className="block">{credential.type}</code>
-                  <code className="block">{credential.issuanceDate}</code>
-                </li>
-              ))}
-            </ul>
-          </div>
+                  Request airdrop
+                </Button>
+              )}
 
-          {/* airdrop section */}
-          <div className="space-y-2">
-            <h2 className="font-bold">ERC20 Airdrop</h2>
-
-            {requestAirdropEnabled && (
-              <Button
-                loading={claimAirdropPending}
-                onClick={() => claimAirdrop()}
-                className="btn btn-neutral w-full"
-              >
-                Request airdrop
-              </Button>
-            )}
-
-            {zkpRequestLoading ? (
-              <p>Loading...</p>
-            ) : (
-              <div className="text-start space-y-2">
-                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
-                  <code>
-                    Balance:{" "}
-                    {formatUnits(
-                      zkpRequest?.balance ?? 0,
-                      OPID_AIRDROP_DECIMALS
-                    )}
-                  </code>
+              {zkpRequestLoading ? (
+                <p>Loading...</p>
+              ) : (
+                <div className="text-start space-y-2">
+                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                    <code>
+                      Balance:{" "}
+                      {formatUnits(
+                        zkpRequest?.balance ?? 0,
+                        OPID_AIRDROP_DECIMALS
+                      )}
+                    </code>
+                  </div>
+                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                    <code>
+                      Verified: {String(zkpRequest?.isVerified ?? false)}
+                    </code>
+                  </div>
+                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
+                    <code>Token: {shortenString(OPID_AIRDROP_ADDRESS)}</code>
+                    <CopyButton
+                      value={OPID_AIRDROP_ADDRESS}
+                      className="absolute right-1 top-1/2 -translate-y-1/2"
+                    />
+                  </div>
+                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
+                    <code>
+                      Metadata: <br /> <br />{" "}
+                      {JSON.stringify(zkpRequest?.metadata)}
+                    </code>
+                    <CopyButton
+                      value={zkpRequest?.metadata}
+                      className="absolute right-1 top-1"
+                    />
+                  </div>
                 </div>
-                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
-                  <code>
-                    Verified: {String(zkpRequest?.isVerified ?? false)}
-                  </code>
-                </div>
-                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
-                  <code>Token: {shortenString(OPID_AIRDROP_ADDRESS)}</code>
-                  <button
-                    disabled={tokenCopied}
-                    onClick={() => copyToken(OPID_AIRDROP_ADDRESS)}
-                    className="h-10 w-10 p-0 flex justify-center items-center absolute right-1 top-1/2 -translate-y-1/2"
-                  >
-                    {tokenCopied ? (
-                      <CheckIcon className="h-4 w-4" />
-                    ) : (
-                      <CopyIcon className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
-                  <code>
-                    Metadata: <br /> <br />{" "}
-                    {JSON.stringify(zkpRequest?.metadata)}
-                  </code>
-                  <button
-                    disabled={metadataCopied}
-                    onClick={() => zkpRequest?.metadata && copyMetadata(JSON.stringify(zkpRequest?.metadata))}
-                    className="h-10 w-10 p-0 flex justify-center items-center absolute right-1 top-1"
-                  >
-                    {metadataCopied ? (
-                      <CheckIcon className="h-4 w-4" />
-                    ) : (
-                      <CopyIcon className="h-4 w-4" />
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+              )}
+            </>
+          )}
+        </div>
+      </>
     </div>
   );
 }

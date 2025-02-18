@@ -30,3 +30,6 @@ dist-ssr
 
 .serverless
 /.aws-sam
+
+# sst
+.sst
