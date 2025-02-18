@@ -3,7 +3,7 @@ import { useState } from "react";
 export const useCopyToClipboard = ({ timeout }: { timeout: number }) => {
   const [copied, setCopied] = useState(false);
 
-  const copyToClipboard = (text: string) => {
+  const copy = (text: string) => {
     navigator.clipboard.writeText(text);
 
     setCopied(true);
@@ -13,5 +13,5 @@ export const useCopyToClipboard = ({ timeout }: { timeout: number }) => {
     }, timeout);
   };
 
-  return { copyToClipboard, copied };
+  return { copy, copied };
 };

@@ -16,6 +16,7 @@ import { formatUnits } from "ethers";
 import { kycAgeClaimIssuer } from "@/services/kyc-age-issuer";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { Button } from "@/components/ui/button";
+import { CheckIcon, CopyIcon } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -27,7 +28,9 @@ function Index() {
   const { airdrop } = useOpIdAirdrop();
   const { wallets, credentials, saveCredentials } = useOpId();
 
-  const { copyToClipboard, copied } = useCopyToClipboard({ timeout: 1000 });
+  const { copy: copyDid, copied: didCopied } = useCopyToClipboard({ timeout: 1000 });
+  const { copy: copyToken, copied: tokenCopied } = useCopyToClipboard({ timeout: 1000 });
+  const { copy: copyMetadata, copied: metadataCopied } = useCopyToClipboard({ timeout: 1000 });
 
   // load airdrop status
   const { data: zkpRequest, isLoading: zkpRequestLoading } = useQuery({
@@ -77,7 +80,7 @@ function Index() {
       });
       alert("Airdrop request was successful");
     },
-    onError: () =>  alert("Airdrop request failed")
+    onError: () => alert("Airdrop request failed"),
   });
 
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
@@ -110,17 +113,21 @@ function Index() {
           {/* did section */}
           <div className="space-y-2">
             <h2 className="font-bold">Your DID</h2>
-            <button
-              disabled={copied}
-              onClick={() => wallets?.did && copyToClipboard(wallets.did)}
-              className="btn btn-neutral w-full"
-            >
-              {copied ? "Copied" : "Copy DID"}
-            </button>
-            <div className="border rounded-md bg-gray-50 p-3">
+            <div className="border rounded-md bg-gray-50 p-3 relative">
               <code className="block">
                 {shortenString(wallets?.did ?? "-")}
               </code>
+              <button
+                disabled={didCopied}
+                onClick={() => wallets?.did && copyDid(wallets.did)}
+                className="h-10 w-10 p-0 flex justify-center items-center absolute right-1 top-1/2 -translate-y-1/2"
+              >
+                {didCopied ? (
+                  <CheckIcon className="h-4 w-4" />
+                ) : (
+                  <CopyIcon className="h-4 w-4" />
+                )}
+              </button>
             </div>
           </div>
 
@@ -172,7 +179,7 @@ function Index() {
             {zkpRequestLoading ? (
               <p>Loading...</p>
             ) : (
-              <>
+              <div className="text-start space-y-2">
                 <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
                   <code>
                     Balance:{" "}
@@ -187,15 +194,38 @@ function Index() {
                     Verified: {String(zkpRequest?.isVerified ?? false)}
                   </code>
                 </div>
-                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
-                  <code>Token: {OPID_AIRDROP_ADDRESS}</code>
+                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
+                  <code>Token: {shortenString(OPID_AIRDROP_ADDRESS)}</code>
+                  <button
+                    disabled={tokenCopied}
+                    onClick={() => copyToken(OPID_AIRDROP_ADDRESS)}
+                    className="h-10 w-10 p-0 flex justify-center items-center absolute right-1 top-1/2 -translate-y-1/2"
+                  >
+                    {tokenCopied ? (
+                      <CheckIcon className="h-4 w-4" />
+                    ) : (
+                      <CopyIcon className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
                   <code>
-                    Metadata: <br /> {JSON.stringify(zkpRequest?.metadata)}
+                    Metadata: <br /> <br />{" "}
+                    {JSON.stringify(zkpRequest?.metadata)}
                   </code>
+                  <button
+                    disabled={metadataCopied}
+                    onClick={() => zkpRequest?.metadata && copyMetadata(JSON.stringify(zkpRequest?.metadata))}
+                    className="h-10 w-10 p-0 flex justify-center items-center absolute right-1 top-1"
+                  >
+                    {metadataCopied ? (
+                      <CheckIcon className="h-4 w-4" />
+                    ) : (
+                      <CopyIcon className="h-4 w-4" />
+                    )}
+                  </button>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </>
