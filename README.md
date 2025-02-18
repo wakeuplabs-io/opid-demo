@@ -1,42 +1,50 @@
 
 # OPID Zk Erc20 Airdrop Demo
 
-Demo to showcase the usage of the Optimism Zk Identity kit. 
+This demo highlights the usage of the Optimism ZK Identity Kit, showcasing an airdrop workflow using the Selective Disclosure Verifier and the Issuer Node.
 
-In this case we showcase an airdrop workflow using the Selective Disclosure verifier and the Issuer Node. The idea is users can come to the website, issue a KycAge credential for them and later claim the Airdrop. A small demo here:
+Users can visit the website, generate a KycAge credential, and later use it to claim the airdrop.
+
+User connects wallet:
+
+![alt text](./assets/demo-0.png)
+
+Users can copy their DID, see their credentials, check their airdrop balance and the zk requests metadata
+
+![alt text](./assets/demo-1.png)
+![alt text](./assets/demo-2.png)
+
+
+For the demo we deployed a contract that mints tokens for those that submit a selective proof disclosure for the age o a KycAge credential. Just for demo porpouses we don't enforce any particular issuer but that can be set. he contracts used for this demo can be found in the [opid-contracts-examples](https://github.com/wakeuplabs-io/opid-contracts-examples) repo in particular the `ERC20SelectiveDisclosureVerifier`.
+
+Also in this particular case, and just to showcase an interaction with the whole system the ui reaches to the issuer service that creates credentials to everyone without distintction. In a real case scenario the issuer should effectivly run some checks to give credibility to his credentials.
+
+So when clicking in `Request KYCAgeCredential credential` we'll emit a valid credential and publish it onchain. We do this from `packages/ui/src/services/kyc-age-issuer.ts`. Again, this is just for demo, in a production case this should NOT be the way, and issuance keys should be protected.
+
+![alt text](./assets/demo-3.png)
+
+
+Once we have the KYCAge credential we can see it reflected in "Your credentials" section and can proceed to claim the airdrop.
+
+![alt text](./assets/demo-4.png)
+
+![alt text](./assets/demo-5.png)
+
+User will have to pay for the gas of submitting the proof and minting the tokens.
+
+![alt text](./assets/demo-6.png)
+
+And after transaction was mined balance will be reflected
+
+![alt text](./assets/demo-7.png)
+
+The full video available here:
 
 <video controls>
-  <source src="./readme-assets/demo.mp4" type="video/mp4">
+  <source src="./assets/demo.mp4" type="video/mp4">
 </video>
-
-The contracts used for this demo can be found here: https://github.com/wakeuplabs-io/opid-contracts-examples
-
 
 ## Notes
 
 Just for demo porpoises we made the following simplifications
-- Website directly reaches the issuer node with admin credentials and publishes the state. This means any user can claim they're worthy even if they're not. In a real production case the issuer would restrict the issuance and run the proper checks to certify the user claims. Not a system requirement but just to reinforce verifiers trust on the credential itself.
 - Identity wallet is created locally and there's no recovery flow. In a real production case users would need to keep their identity safe. 
-
-# React Monorepo Template
-
-## Node and PNPM version
-
-- Node version: 18.18.2
-- pnpm version: 9.12.1
-
-## Create user for deployment (AWS)
-
-1. Go to IAM service
-2. Click Users --> `Create User`
-
-   ![image info](readme-assets/create-user.png)
-
-3. Fill the user name and click on `Next`
-4. Click `Attach policies directly`, click on `AdministratorAccess` and click on `Next`
-5. Click on `Create user`
-6. View the created user.
-7. Click on the tab `Security credentials` and click on `Create access key`
-8. Click on the option `Command Line Interface (CLI)` and click on `Next`
-9. Click on the button `Create access key`
-10. Copy the keys `Access key` and `Secret access key`
