@@ -33,19 +33,14 @@ export class AirdropService {
     return this.proofService.generateProof(
       {
         id: this.REQUEST_ID,
-        circuitId: CircuitId.AtomicQueryV3OnChain,
+        circuitId: CircuitId.AtomicQuerySigV2OnChain,
         optional: false,
         query: {
-          allowedIssuers: ["*"],
+          allowedIssuers: ['*'],
           context:
-            "https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld",
-          credentialSubject: { birthday: {} },
-          type: "KYCAgeCredential",
-          proofType: 1,
-          skipClaimRevocationCheck: false
-        },
-        params: {
-          nullifierSessionId: 0,
+            'https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json-ld/kyc-v3.json-ld',
+          credentialSubject: { birthday: { $lt: 20020101 } },
+          type: 'KYCAgeCredential'
         }
       },
       userDID,

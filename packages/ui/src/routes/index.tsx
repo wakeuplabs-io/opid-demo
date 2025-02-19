@@ -47,7 +47,6 @@ function Index() {
         // It's worth mentioning that for demo porpoises we are blindly trusting user is worthy.
         // in real world case issuer should run their own checks to have a bigger trust from validators
         await kycAgeClaimIssuer.createKycAgeClaim(wallets.did, 19960424);
-        await kycAgeClaimIssuer.publishIssuerState();
 
         // fetch and save credentials locally
         await saveCredentials(
@@ -67,21 +66,38 @@ function Index() {
         core.DID.parse(wallets.did),
         address!
       );
+
       return await airdrop.submitPoof(AIRDROP_REQUEST_ID, proof);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["zkp-request", address ?? "0x"],
       });
+
+      // We can only claim airdrop once per did
+      window.localStorage.setItem(wallets!.did, address!);
+
       alert("Airdrop request was successful");
     },
-    onError: () => alert("Airdrop request failed"),
+    onError: (e) => {
+      console.error(e);
+      alert("Airdrop request failed");
+    },
   });
+
+  const claimedAddress = useMemo(() => {
+    if (!wallets?.did) return "0x0";
+    return window.localStorage.getItem(wallets?.did);
+  }, [wallets?.did]);
 
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
   const requestAirdropEnabled = useMemo(() => {
-    return !(zkpRequest?.isVerified || zkpRequestLoading);
-  }, [zkpRequest, zkpRequestLoading]);
+    return !(
+      zkpRequest?.isVerified ||
+      zkpRequestLoading ||
+      claimedAddress == address
+    );
+  }, [zkpRequest, zkpRequestLoading, claimedAddress, address]);
 
   // if we already have a valid credential prevent spamming by disabling request
   const requestCredentialEnabled = useMemo(() => {
@@ -166,6 +182,10 @@ function Index() {
                 <p>Loading...</p>
               ) : (
                 <div className="text-start space-y-2">
+                  {claimedAddress && claimedAddress !== "0x0" && (
+                    <span>Claimed with address: {claimedAddress}</span>
+                  )}
+
                   <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
                     <code>
                       Balance:{" "}
@@ -193,7 +213,7 @@ function Index() {
                       {JSON.stringify(zkpRequest?.metadata)}
                     </code>
                     <CopyButton
-                      value={zkpRequest?.metadata}
+                      value={JSON.stringify(zkpRequest?.metadata)}
                       className="absolute right-1 top-1"
                     />
                   </div>

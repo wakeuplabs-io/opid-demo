@@ -1,7 +1,7 @@
 
 # OPID Zk Erc20 Airdrop Demo
 
-This demo highlights the usage of the Optimism ZK Identity Kit, showcasing an airdrop workflow using the Selective Disclosure Verifier and the Issuer Node. Users can visit the website, generate a KycAge credential, and later use it to claim the airdrop.
+This demo highlights the usage of the Optimism ZK Identity Kit, showcasing an airdrop workflow. using the Selective Disclosure Verifier and the Issuer Node. Users can visit the website, generate a KycAge credential, and later use it to claim the airdrop.
 
 User connects wallet:
 

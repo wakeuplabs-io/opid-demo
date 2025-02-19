@@ -1,4 +1,4 @@
-export const RHS_URL = "http://a009ec078484b45e5b233cc29eab9f83-ff4fb4ecca77ee61.elb.us-east-1.amazonaws.com";
+export const RHS_URL = "https://opid-rhs.wakeuplabs.link";
 export const OPID_BLOCKCHAIN = "optimism";
 export const OPID_NETWORK = "sepolia";
 export const OPID_CHAIN_ID = 11155420;

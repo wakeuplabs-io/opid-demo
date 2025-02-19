@@ -30,19 +30,19 @@ export class StorageService {
 
     // load circuits
     const [v3_w, v3_z, v3_j] = await Promise.all([
-      fetch(`./${CircuitId.AtomicQueryV3OnChain}/circuit.wasm`)
+      fetch(`./${CircuitId.AtomicQuerySigV2OnChain}/circuit.wasm`)
         .then((response) => response.arrayBuffer())
         .then((buffer) => new Uint8Array(buffer)),
-      fetch(`./${CircuitId.AtomicQueryV3OnChain}/circuit_final.zkey`)
+      fetch(`./${CircuitId.AtomicQuerySigV2OnChain}/circuit_final.zkey`)
         .then((response) => response.arrayBuffer())
         .then((buffer) => new Uint8Array(buffer)),
-      fetch(`./${CircuitId.AtomicQueryV3OnChain}/verification_key.json`)
+      fetch(`./${CircuitId.AtomicQuerySigV2OnChain}/verification_key.json`)
         .then((response) => response.arrayBuffer())
         .then((buffer) => new Uint8Array(buffer)),
     ]);
 
-    await dataStorage.circuits.saveCircuitData(CircuitId.AtomicQueryV3OnChain, {
-      circuitId: CircuitId.AtomicQueryV3OnChain,
+    await dataStorage.circuits.saveCircuitData(CircuitId.AtomicQuerySigV2OnChain, {
+      circuitId: CircuitId.AtomicQuerySigV2OnChain,
       wasm: v3_w,
       provingKey: v3_z,
       verificationKey: v3_j,
