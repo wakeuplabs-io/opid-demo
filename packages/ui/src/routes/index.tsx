@@ -90,6 +90,10 @@ function Index() {
     return window.localStorage.getItem(wallets?.did);
   }, [wallets?.did]);
 
+  const kycAgeCredential = useMemo(() => {
+    return credentials.find((c) => c.type.includes("KYCAgeCredential"));
+  }, [credentials]);
+
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
   const requestAirdropEnabled = useMemo(() => {
     return !(
@@ -98,13 +102,6 @@ function Index() {
       claimedAddress == address
     );
   }, [zkpRequest, zkpRequestLoading, claimedAddress, address]);
-
-  // if we already have a valid credential prevent spamming by disabling request
-  const requestCredentialEnabled = useMemo(() => {
-    return (
-      credentials.find((c) => c.type.includes("KYCAgeCredential")) === undefined
-    );
-  }, [credentials]);
 
   return (
     <div className="max-w-xl mx-auto w-full text-center space-y-10 py-10 px-4">
@@ -120,8 +117,8 @@ function Index() {
         {/* did section */}
         <div className="space-y-2">
           <h2 className="font-bold">Your DID</h2>
-          <div className="border rounded-md bg-gray-50 p-3 relative">
-            <code className="block">{shortenString(wallets?.did ?? "-")}</code>
+          <div className="border rounded-md bg-gray-50 p-3 relative text-start">
+            <code className="block overflow-clip">{wallets?.did ?? "-"}</code>
             <CopyButton
               value={wallets?.did}
               className="absolute right-1 top-1/2 -translate-y-1/2"
@@ -131,93 +128,108 @@ function Index() {
 
         {/* credentials section */}
         <div className="space-y-2">
-          <h2 className="font-bold">Your credentials</h2>
+          <h2 className="font-bold">Your KycAge credential</h2>
 
-          {requestCredentialEnabled && (
-            <Button
-              loading={claimCredentialPending}
-              onClick={() => claimCredential()}
-              className="btn btn-neutral w-full"
-            >
-              Request KYCAgeCredential credential
-            </Button>
-          )}
-
-          <ul className="space-y-2">
-            {credentials.map((credential) => (
-              <li
-                key={credential.id}
-                className="border rounded-md bg-gray-50 p-3"
+          {kycAgeCredential ? (
+            <div className="border rounded-md bg-gray-50 p-3 text-start">
+              <code className="block">
+                Id: {shortenString(kycAgeCredential.id)}
+              </code>
+              <code className="block">
+                Issuer:
+                {shortenString(kycAgeCredential.issuer)}
+              </code>
+              <code className="block">Type: {kycAgeCredential.type}</code>
+              <code className="block">
+                IssuanceDate: {kycAgeCredential.issuanceDate}
+              </code>
+            </div>
+          ) : (
+            <>
+              <Button
+                loading={claimCredentialPending}
+                onClick={() => claimCredential()}
+                className="btn btn-neutral w-full"
               >
-                <code className="block">{shortenString(credential.id)}</code>
-                <code className="block">
-                  {shortenString(credential.issuer)}
-                </code>
-                <code className="block">{credential.type}</code>
-                <code className="block">{credential.issuanceDate}</code>
-              </li>
-            ))}
-          </ul>
+                Request KYCAgeCredential credential
+              </Button>
+              <div className="border rounded-md bg-gray-50 p-3 text-center">
+                No credential found
+              </div>
+            </>
+          )}
         </div>
 
         {/* airdrop section */}
 
         <div className="space-y-2">
           <h2 className="font-bold">ERC20 Airdrop</h2>
-          <ConnectWalletButton />
-
-          {address && (
+          {kycAgeCredential === undefined ? (
+            <div className="border rounded-md bg-gray-50 p-3 text-center">
+              Claim KYCAgeCredential credential before requesting airdrop
+            </div>
+          ) : (
             <>
-              {requestAirdropEnabled && (
-                <Button
-                  loading={claimAirdropPending}
-                  onClick={() => claimAirdrop()}
-                  className="btn btn-neutral w-full"
-                >
-                  Request airdrop
-                </Button>
-              )}
-
-              {zkpRequestLoading ? (
-                <p>Loading...</p>
-              ) : (
-                <div className="text-start space-y-2">
-                  {claimedAddress && claimedAddress !== "0x0" && (
-                    <span>Claimed with address: {claimedAddress}</span>
+              <ConnectWalletButton />
+              
+              {address && (
+                <>
+                  {requestAirdropEnabled && (
+                    <Button
+                      loading={claimAirdropPending}
+                      onClick={() => claimAirdrop()}
+                      className="btn btn-neutral w-full"
+                    >
+                      Request Airdrop
+                    </Button>
                   )}
 
-                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
-                    <code>
-                      Balance:{" "}
-                      {formatUnits(
-                        zkpRequest?.balance ?? 0,
-                        OPID_AIRDROP_DECIMALS
+                  {zkpRequestLoading ? (
+                    <p>Loading...</p>
+                  ) : (
+                    <div className="text-start space-y-2">
+                      {claimedAddress && claimedAddress !== "0x0" && (
+                        <div className="text-center mb-6">
+                          Claimed with address: {shortenString(claimedAddress)}
+                        </div>
                       )}
-                    </code>
-                  </div>
-                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
-                    <code>
-                      Verified: {String(zkpRequest?.isVerified ?? false)}
-                    </code>
-                  </div>
-                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
-                    <code>Token: {shortenString(OPID_AIRDROP_ADDRESS)}</code>
-                    <CopyButton
-                      value={OPID_AIRDROP_ADDRESS}
-                      className="absolute right-1 top-1/2 -translate-y-1/2"
-                    />
-                  </div>
-                  <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
-                    <code>
-                      Metadata: <br /> <br />{" "}
-                      {JSON.stringify(zkpRequest?.metadata)}
-                    </code>
-                    <CopyButton
-                      value={JSON.stringify(zkpRequest?.metadata)}
-                      className="absolute right-1 top-1"
-                    />
-                  </div>
-                </div>
+
+                      <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                        <code>
+                          Balance:{" "}
+                          {formatUnits(
+                            zkpRequest?.balance ?? 0,
+                            OPID_AIRDROP_DECIMALS
+                          )}
+                        </code>
+                      </div>
+                      <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll">
+                        <code>
+                          Verified: {String(zkpRequest?.isVerified ?? false)}
+                        </code>
+                      </div>
+                      <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
+                        <code>
+                          Token: {shortenString(OPID_AIRDROP_ADDRESS)}
+                        </code>
+                        <CopyButton
+                          value={OPID_AIRDROP_ADDRESS}
+                          className="absolute right-1 top-1/2 -translate-y-1/2"
+                        />
+                      </div>
+                      <div className="border rounded-md bg-gray-50 p-3 overflow-x-scroll relative">
+                        <code>
+                          Metadata: <br /> <br />{" "}
+                          {JSON.stringify(zkpRequest?.metadata)}
+                        </code>
+                        <CopyButton
+                          value={JSON.stringify(zkpRequest?.metadata)}
+                          className="absolute right-1 top-1"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </>
           )}
