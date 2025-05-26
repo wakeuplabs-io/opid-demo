@@ -42,8 +42,25 @@ export const OpIdProvider: React.FC<{ children: ReactNode }> = ({
   }, []);
 
   const saveCredentials = async (credentials: W3CCredential[]) => {
-    await wallets?.credentials.saveAll(credentials);
-    setCredentials((creds) => [...credentials, ...creds]);
+    try {
+      if (!wallets) {
+        console.error("Cannot save credentials: wallets not initialized");
+        return;
+      }
+      
+      await wallets.credentials.saveAll(credentials);
+      
+      setCredentials((currentCreds) => {
+        const existingIds = new Set(currentCreds.map(cred => cred.id));
+        const uniqueNewCreds = credentials.filter(cred => !existingIds.has(cred.id));
+        const updatedCreds = [...currentCreds, ...uniqueNewCreds];
+        
+        return updatedCreds;
+      });
+    } catch (error) {
+      console.error("Failed to save credentials:", error);
+      throw error;
+    }
   };
 
   return (

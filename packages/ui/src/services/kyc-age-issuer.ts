@@ -11,7 +11,7 @@ export class KycAgeClaimIssuer {
   }
 
   async createKycAgeClaim(userDid: string, birthday: number): Promise<void> {
-    await this.api.post(`/${this.issuerDid}/claims`, {
+    return await this.api.post(`/identities/${this.issuerDid}/credentials`, {
       "credentialSchema": 'https://raw.githubusercontent.com/iden3/claim-schema-vocab/main/schemas/json/KYCAgeCredential-v3.json',
       "type": "KYCAgeCredential",
       "credentialSubject": {
@@ -23,11 +23,31 @@ export class KycAgeClaimIssuer {
   }
 
   async getKycAgeClaims(userDid: string, revoked: boolean = false): Promise<W3CCredential[]> {
-    const claims = await this.api.get(`/${this.issuerDid}/claims`, {
-      params: { schemaType: "KYCAgeCredential", subject: userDid, revoked }
-    });
+    // Add a delay to give the issuer time to process the credential
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    return claims.data.map((claim: unknown) =>  W3CCredential.fromJSON(claim));
+    try {
+      const response = await this.api.get(`/identities/${this.issuerDid}/credentials`, {
+        params: { schemaType: "KYCAgeCredential", subject: userDid, revoked }
+      });
+
+
+      const items = response.data?.items || [];
+
+      if (items.length === 0) {
+        console.warn("No KYCAgeCredential found for this user. This might be because the credential is still being processed.");
+      }
+
+      const credentials = items.map((item: any) => {
+        const credential = W3CCredential.fromJSON(item.vc);
+        return credential;
+      });
+
+      return credentials;
+    } catch (error) {
+      console.error("Error retrieving or processing credentials:", error);
+      throw error;
+    }
   }
 }
 
@@ -36,5 +56,4 @@ export const kycAgeClaimIssuer = new KycAgeClaimIssuer(
   import.meta.env.VITE_ISSUER_DID,
   import.meta.env.VITE_ISSUER_USER,
   import.meta.env.VITE_ISSUER_PASSWORD
-);
-
+); 

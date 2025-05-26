@@ -43,18 +43,29 @@ function Index() {
       mutationFn: async () => {
         if (!wallets || !credentials) return;
 
-        // create credential and publish state
-        // It's worth mentioning that for demo porpoises we are blindly trusting user is worthy.
-        // in real world case issuer should run their own checks to have a bigger trust from validators
-        await kycAgeClaimIssuer.createKycAgeClaim(wallets.did, 19960424);
-
-        // fetch and save credentials locally
-        await saveCredentials(
-          await kycAgeClaimIssuer.getKycAgeClaims(wallets.did)
-        );
+        try {
+          // create credential and publish state
+          // It's worth mentioning that for demo porpoises we are blindly trusting user is worthy.
+          // in real world case issuer should run their own checks to have a bigger trust from validators
+          await kycAgeClaimIssuer.createKycAgeClaim(wallets.did, 19960424);
+          
+          // fetch and save credentials locally
+          const kycAgeClaimGet = await kycAgeClaimIssuer.getKycAgeClaims(wallets.did);
+          
+          // Save the credentials and return them
+          await saveCredentials(kycAgeClaimGet);
+          
+          return kycAgeClaimGet;
+        } catch (error) {
+          console.error("Error claiming credential:", error);
+          throw error;
+        }
       },
       onSuccess: () => alert("Credential claim was successful"),
-      onError: () => alert("Credential claim failed"),
+      onError: (error) => {
+        console.error("Credential claim failed:", error);
+        alert("Credential claim failed");
+      },
     });
 
   // generate credential proof and claim airdrop with it
@@ -91,7 +102,12 @@ function Index() {
   }, [wallets?.did]);
 
   const kycAgeCredential = useMemo(() => {
-    return credentials.find((c) => c.type.includes("KYCAgeCredential"));
+    // Check for "KYCAgeCredential" in any of the types (more flexible matching)
+    return credentials.find((c) => 
+      Array.isArray(c.type) 
+        ? c.type.some(t => t.includes("KYCAgeCredential"))
+        : typeof c.type === 'string' && c.type.includes("KYCAgeCredential")
+    );
   }, [credentials]);
 
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
