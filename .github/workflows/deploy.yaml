@@ -10,16 +10,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: "pnpm"
-      
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
       - name: Install dependencies
-        run: pnpm install
+        run: npm ci
 
       - name: Generate .env file
         working-directory: ./packages/ui
@@ -32,24 +33,16 @@ jobs:
           echo "VITE_ISSUER_PASSWORD=${{ secrets.ISSUER_PASSWORD }}" >> .env
           cat .env
 
-      - name: Build all
-        run: pnpm build
+      - name: Build ui
+        working-directory: ./packages/ui
+        run: npm run build
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
-      - name: SAM Build
-        run: sam build
-
-      - name: SAM Deploy
-        run: |
-          sam deploy --stack-name ${{vars.STACK_NAME}} --parameter-overrides StackName='${{ vars.STACK_NAME }}' DomainName='${{vars.UI_DOMAIN}}'
-
-      - name: Deploy UI to s3
-        working-directory: ./packages/ui
-        run: |
-          aws s3 sync dist s3://${{ vars.STACK_NAME }}.${{vars.UI_DOMAIN}}/
+      - name: Deploy
+        run: npm run deploy:app

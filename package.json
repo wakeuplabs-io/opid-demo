@@ -5,7 +5,8 @@
   "scripts": {
     "build": "pnpm -r run build",
     "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "deploy:app": "sst deploy --print-logs"
   },
   "keywords": [],
   "author": "",
