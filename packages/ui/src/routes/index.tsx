@@ -102,12 +102,7 @@ function Index() {
   }, [wallets?.did]);
 
   const kycAgeCredential = useMemo(() => {
-    // Check for "KYCAgeCredential" in any of the types (more flexible matching)
-    return credentials.find((c) => 
-      Array.isArray(c.type) 
-        ? c.type.some(t => t.includes("KYCAgeCredential"))
-        : typeof c.type === 'string' && c.type.includes("KYCAgeCredential")
-    );
+    return credentials.find((c) => c.type.includes("KYCAgeCredential"));
   }, [credentials]);
 
   // block request airdrop if we already verified the proof. tx would fail anyways, this is just ux
